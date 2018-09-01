@@ -3,7 +3,10 @@
 yarn add imeepos-child-process
 ```
 
-## subscribe监听时自动创建fork进程，next时发送指令给child-process,unsubscribe自动kill
+###
+> subscribe监听时自动创建fork进程 \n
+> next时发送指令给child-process \n
+> unsubscribe自动kill \n
 
 ```ts
 import { ForkChildProcessSubject } from 'imeepos-child-process';
