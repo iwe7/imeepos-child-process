@@ -33,7 +33,6 @@ class ForkChildProcessBidging extends CoreBidging<ForkChildProcessOption> {
                     next(new CoreBidgingEvent('message', res))
                 }
             });
-            this._fork.send(new CoreBidgingEvent('start', {}));
         } catch (e) {
             error(e);
             return;

@@ -20,6 +20,10 @@ fork.pipe().subscribe(
     err => console.log(err),
     () => console.log('complete')
 );
+fork.next({
+    action: "start",
+    payload: {}
+})
 // 关闭调用fork->kill
 fork.unsubscribe();
 ```
