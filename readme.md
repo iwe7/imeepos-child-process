@@ -1,3 +1,7 @@
+## 简介
+> 最近做项目，用到nodejs多进程，喜欢rxjs便做了如下封装，基本满足我的需求！
+> [源码请戳](https://github.com/iwe7/imeepos-child-process)
+
 ## 安装
 ```
 yarn add imeepos-child-process
