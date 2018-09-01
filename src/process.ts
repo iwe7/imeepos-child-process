@@ -1,39 +1,61 @@
-import { fromEvent } from 'rxjs';
-import { CoreBidging, CoreBidgingSubject, CoreBidgingOption, CoreBidgingEvent } from './core-bidging';
-export class CoreProcess extends CoreBidging {
-    close(msg?: any): void {
-        process.exit(msg);
+import { Subject, fromEvent, merge, Subscriber, Subscription, ObjectUnsubscribedError } from 'rxjs';
+
+export class ProcessSubject<T> extends Subject<T> {
+    constructor() {
+        super();
     }
-    create(next: (value: any) => void, error: (err: Error) => void, complete: () => void): void {
-        fromEvent(process, 'exit').subscribe(res => {
-            complete();
-        });
-        fromEvent(process, 'disconnect').subscribe(res => {
-            complete();
-        });
-        fromEvent(process, 'message').subscribe((res: any) => {
-            if (Array.isArray(res)) {
-                res = res[0];
-            }
-            if (res.action) {
-                next(res)
-            } else {
-                next(new CoreBidgingEvent('message', res))
-            }
-        });
-    }
-    send(msg: any, handel?: any): void {
+
+    next(val: T) {
+        if (this.closed) {
+            throw new ObjectUnsubscribedError();
+        }
         if (process.send) {
-            process.send(msg, handel);
+            process.send(val, (err: Error) => {
+                if (err) {
+                    super.error(err);
+                }
+            });
         } else if (process.emit) {
-            process.emit('message', msg, handel)
+            process.emit('message', val, null)
+        } else {
+            this.error(new Error('method not fond'));
         }
     }
-}
 
-export class ProcessSubject<T extends CoreBidgingEvent> extends CoreBidgingSubject<T> {
-    constructor(option: CoreBidgingOption) {
-        super(option);
-        option.bidging = CoreProcess;
+    complete() {
+        process.exit();
+        this.resetState();
+        super.complete();
+    }
+
+    resetState() {
+        // process.removeAllListeners('message');
+    }
+
+    error(err: Error) {
+        process.exit();
+        this.resetState();
+        super.error(err);
+    }
+
+    _superNext(msg: T) {
+        this.observers = this.observers || [];
+        super.next(msg);
+    }
+
+    _subscribe(subscriber: Subscriber<T>): Subscription {
+        const subscriber2 = super._subscribe(subscriber);
+        process.on('message', (msg) => this._superNext(msg));
+        merge(
+            fromEvent(process, 'close'),
+            fromEvent(process, 'disconnect'),
+            fromEvent(process, 'exit'),
+        ).subscribe(() => this.complete());
+        return subscriber2;
+    }
+
+    unsubscribe() {
+        process.exit();
+        super.unsubscribe();
     }
 }

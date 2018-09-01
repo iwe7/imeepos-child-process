@@ -13,10 +13,8 @@ yarn add imeepos-child-process
 * unsubscribe自动kill
 
 ```ts
-import { ForkChildProcessSubject } from 'imeepos-child-process';
-const fork = new ForkChildProcessSubject({
-    file: "./forks/test"
-});
+import { CPForkSubject } from 'imeepos-child-process';
+const fork = new CPForkSubject('./forks/test', 1000000);
 fork.pipe().subscribe(
     res => {
         console.log(res);
@@ -24,12 +22,6 @@ fork.pipe().subscribe(
     err => console.log(err),
     () => console.log('complete')
 );
-fork.next({
-    action: "start",
-    payload: {}
-})
-// 关闭调用fork->kill
-fork.unsubscribe();
 ```
 
 ### ProcessSubject
@@ -40,19 +32,39 @@ fork.unsubscribe();
 - forks/test
 ```ts
 import { tap, map } from 'rxjs/operators';
-import { CoreBidgingEvent, ProcessSubject } from 'imeepos-child-process';
-const proc = new ProcessSubject<CoreBidgingEvent>({});
+import { ProcessSubject } from 'imeepos-child-process';
+const proc = new ProcessSubject<number>({});
 proc.pipe(
-    tap(res => {
-        if (res.action === 'start') {
-            for (let i = 0; i < 1000000000; i++) {
-
-            }
-            proc.next({
-                action: "finish",
-                payload: {}
-            })
+    tap((res:number) => {
+        let s = 0;
+        for (let i = 0; i < res; i++) {
+            s += i;
         }
+        proc.next(s);
+        // 终止
+        proc.complete();
     })
 ).subscribe();
+```
+
+
+封装后可以方便的使用rxjs提供的操作符操作
+```ts
+import { merge } from 'rxjs';
+
+import { CPForkSubject } from 'imeepos-child-process';
+const forks = [];
+for (let i = 0; i < 10; i++) {
+    forks.push(run('./forks/test', (i + 1) * 100000000));
+}
+
+merge(...forks).pipe().subscribe(res => {
+    console.log(res);
+});
+
+function run(file: string, start: number) {
+    const fork = new CPForkSubject(file, start).pipe();
+    return fork;
+}
+
 ```
