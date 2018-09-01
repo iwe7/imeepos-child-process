@@ -1,3 +1,5 @@
+## subscribe监听时自动创建fork进程，next时发送指令给child-process,unsubscribe自动kill
+
 ```ts
 import { ForkChildProcessSubject } from 'imeepos-child-process';
 const fork = new ForkChildProcessSubject({
@@ -14,7 +16,7 @@ fork.pipe().subscribe(
     () => console.log('complete')
 );
 ```
-
+## next 发送消息给主进程，unsubscribe调用process.exit,subscribe监听message事件
 - forks/test
 ```ts
 import { tap, map } from 'rxjs/operators';
